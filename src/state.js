@@ -54,9 +54,13 @@ export function createManager() {
       }
       const message = text.trim();
       if (/^!신청곡(?:\s|$)/u.test(message)) {
-        const fields = message.slice('!신청곡'.length).split('|');
+        const input = message.slice('!신청곡'.length).trim();
+        const separated = input.match(/^(.+?)\s+(?:"([^"]+)"|([^\s"]+))$/u);
+        const fields = input.includes('|')
+          ? input.split('|')
+          : separated ? [separated[1], separated[2] ?? separated[3]] : [];
         if (fields.length !== 2 || fields.some(field => !field.trim())) {
-          throw new Error('사용법: !신청곡 곡 제목 | 아티스트');
+          throw new Error('사용법: !신청곡 곡 제목 아티스트 (여러 단어인 아티스트는 따옴표 또는 | 사용)');
         }
         manager.request({ title: fields[0], artist: fields[1], requester: user });
       }

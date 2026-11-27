@@ -29,6 +29,12 @@ function render(next) {
     status.append(node('span', labels[request.status], `status ${request.status}`));
     const actions = document.createElement('td');
     if (request.status === 'pending') {
+      const search = node('a', 'YouTube 검색', 'song-search');
+      const query = new URLSearchParams({ search_query: `${request.title} ${request.artist}` });
+      search.href = `https://www.youtube.com/results?${query}`;
+      search.target = '_blank';
+      search.rel = 'noopener noreferrer';
+      actions.append(search);
       for (const [action, label] of [['approve', '승인'], ['reject', '거절']]) {
         const button = node('button', label, action === 'approve' ? 'approve' : '');
         button.addEventListener('click', () => {
@@ -71,7 +77,6 @@ async function command(url, body, method = 'POST') {
 $('#filter').addEventListener('change', () => state && render(state));
 $('#add-chat').addEventListener('click', () => command('/api/demo/chat'));
 $('#clear-chat').addEventListener('click', () => command('/api/demo/chat', null, 'DELETE'));
-$('#finish-track').addEventListener('click', () => command('/api/demo/track-ended'));
 $('#request-form').addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -87,8 +92,14 @@ const refreshChzzkStatus = () => fetch('/api/chzzk/auth-status').then(response =
     error: '채팅 연결 실패 · 다시 로그인', disconnected: '채팅 연결 끊김 · 다시 로그인'
   };
   $('#chzzk-auth-status').textContent = labels[chatStatus] ?? (authenticated ? '인증 완료' : '인증 필요');
+  $('#chat .tag').textContent = chatStatus === 'subscribed' ? '치지직 수신 중' : '치지직 미연결';
+  $('#chat .panel-foot .muted').textContent = chatStatus === 'subscribed'
+    ? '치지직 채팅과 가상 채팅이 이 목록에 표시됩니다.'
+    : '가상 채팅으로 신청곡 명령을 테스트할 수 있습니다.';
 }).catch(() => {
   $('#chzzk-auth-status').textContent = '인증 상태 조회 실패';
+  $('#chat .tag').textContent = '연결 상태 확인 불가';
+  $('#chat .panel-foot .muted').textContent = '서비스 연결 상태를 확인해 주세요.';
 });
 refreshChzzkStatus();
 setInterval(refreshChzzkStatus, 3000);
