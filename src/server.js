@@ -3,6 +3,8 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import { createManager } from './state.js';
+import { installChzzkAuth } from './chzzk-auth.js';
+import { createChzzkChat } from './chzzk-chat.js';
 
 export function createApp() {
   const app = express();
@@ -18,6 +20,16 @@ export function createApp() {
     next();
   });
   app.use(express.json({ limit: '16kb' }));
+  const chzzkChat = createChzzkChat((user, message) => {
+    try {
+      manager.chat(user, message);
+      io.emit('state', manager.snapshot());
+    } catch {
+      // Invalid song commands must not interrupt later chat events.
+    }
+  });
+  installChzzkAuth(app, chzzkChat);
+  server.on('close', () => chzzkChat.stop());
   app.use(express.static(fileURLToPath(new URL('../public', import.meta.url))));
   app.get('/api/health', (req, res) => res.json({ ok: true, mode: 'demo' }));
   app.get('/api/state', (req, res) => res.json(manager.snapshot()));
@@ -32,7 +44,7 @@ export function createApp() {
   app.post('/api/requests', mutate(req => manager.request(req.body)));
   app.post('/api/requests/:id/:action', mutate(req => manager.moderate(req.params.id, req.params.action)));
   app.post('/api/demo/track-ended', mutate(() => manager.finish()));
-  app.post('/api/demo/chat', mutate(() => manager.chat()));
+  app.post('/api/demo/chat', mutate(req => manager.chat(req.body?.user, req.body?.text)));
   app.delete('/api/demo/chat', mutate(() => manager.clearChat()));
   io.on('connection', socket => socket.emit('state', manager.snapshot()));
   app.use((err, req, res, next) => res.status(err.status || 500).json({ error: '요청을 처리할 수 없습니다.' }));
