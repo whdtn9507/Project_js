@@ -1,5 +1,6 @@
 const $ = selector => document.querySelector(selector);
 let state;
+const approvalForms = new Map();
 const labels = { pending: '승인 대기', approved: '재생 대기', rejected: '거절됨', played: '재생 선택됨' };
 const node = (tag, text, className) => {
   const element = document.createElement(tag);
@@ -9,6 +10,10 @@ const node = (tag, text, className) => {
 };
 function render(next) {
   state = next;
+  const focused = document.activeElement;
+  for (const id of approvalForms.keys()) {
+    if (!state.requests.some(request => request.id === id && request.status === 'pending')) approvalForms.delete(id);
+  }
   $('#chat-count').textContent = state.chats.length;
   $('#pending-count').textContent = state.requests.filter(r => r.status === 'pending').length;
   $('#queue-count').textContent = state.requests.filter(r => r.status === 'approved').length;
@@ -35,31 +40,60 @@ function render(next) {
       search.target = '_blank';
       search.rel = 'noopener noreferrer';
       actions.append(search);
-      for (const [action, label] of [['approve', '승인'], ['reject', '거절']]) {
-        const button = node('button', label, action === 'approve' ? 'approve' : '');
-        button.addEventListener('click', () => {
-          let body;
-          if (action === 'approve') {
-            const link = window.prompt('YouTube 영상 링크를 입력하세요. 링크 없이 승인하면 시뮬레이션에서만 사용할 수 있습니다.');
-            if (link === null) return;
-            if (link.trim()) {
-              const videoId = youtubeVideoId(link);
-              if (!videoId) { $('#feedback').textContent = '올바른 YouTube 영상 링크를 입력해 주세요.'; return; }
-              body = { videoId };
-            }
-          }
-          command(`/api/requests/${encodeURIComponent(request.id)}/${action}`, body);
+      const approve = node('button', '승인', 'approve');
+      const reject = node('button', '거절');
+      const endpoint = `/api/requests/${encodeURIComponent(request.id)}`;
+      const existingForm = approvalForms.get(request.id);
+      approve.hidden = Boolean(existingForm);
+      approve.addEventListener('click', () => {
+        const form = document.createElement('form');
+        const label = node('label', 'YouTube 영상 링크');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'url';
+        input.placeholder = 'https://www.youtube.com/watch?v=…';
+        input.required = true;
+        input.addEventListener('input', () => input.setCustomValidity(''));
+        label.append(input);
+        const submit = node('button', '승인 확정', 'approve');
+        const cancel = node('button', '취소');
+        cancel.type = 'button';
+        cancel.addEventListener('click', () => {
+          approvalForms.delete(request.id);
+          render(state);
+          $('#request-list tr[data-request-id="' + CSS.escape(request.id) + '"] button.approve')?.focus();
         });
-        actions.append(button);
-      }
+        form.addEventListener('submit', async event => {
+          event.preventDefault();
+          const videoId = youtubeVideoId(input.value);
+          if (!videoId) {
+            input.setCustomValidity('올바른 YouTube 영상 링크를 입력해 주세요.');
+            input.reportValidity();
+            return;
+          }
+          submit.disabled = true;
+          try { await command(endpoint + '/approve', { videoId }); }
+          finally { submit.disabled = false; }
+        });
+        form.append(label, submit, cancel);
+        approvalForms.set(request.id, form);
+        approve.hidden = true;
+        actions.append(form);
+        input.focus();
+      });
+      reject.addEventListener('click', () => command(endpoint + '/reject'));
+      actions.append(approve, reject);
+      if (existingForm) actions.append(existingForm);
     } else if (request.status === 'approved') {
       const cancel = node('button', '승인 취소');
       cancel.addEventListener('click', () => command(`/api/requests/${encodeURIComponent(request.id)}/cancel`));
       actions.append(cancel);
     } else actions.textContent = '—';
+    row.dataset.requestId = request.id;
     row.append(title, node('td', request.requester), status, actions);
     return row;
   }));
+  if (focused?.isConnected && $('#request-list').contains(focused)) focused.focus({ preventScroll: true });
   if (!rows.length) {
     const row = document.createElement('tr');
     const cell = node('td', '표시할 신청곡이 없습니다', 'empty');
