@@ -5,50 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MACHAW Manager</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/studio.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/youtube-player.js" defer></script>
+  <script src="/dashboard-ui.js" defer></script>
 </head>
 <body>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5H4l1.6-4A8.5 8.5 0 1 1 20 11.5Z"/><path d="M8 11h8m-8 4h5"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="18" cy="16" rx="3" ry="2.5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 10a4 4 0 0 0 6 0l4-4a4 4 0 0 0-6-6l-2 2" transform="translate(1 0) scale(.91 1)"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></symbol>
+  </defs></svg>
   <aside class="sidebar">
-    <a class="brand" href="#dashboard"><span class="mark">M</span><span>MACHAW<small>MANAGER</small></span></a>
-    <p class="nav-label">WORKSPACE</p>
-    <nav aria-label="주 메뉴"><a href="#dashboard">▦ 대시보드</a><a href="#chat">◌ 채팅 관리</a><a href="#music">♫ 음악 신청</a><a href="#connections">⚙ 연결 상태</a></nav>
-    <div class="profile"><span class="avatar">마</span><div>마차우<small>로컬 관리자 · 데모</small></div></div>
+    <a class="brand" href="#dashboard" aria-label="MACHAW Manager"><span class="mark">M</span><span class="brand-name">MACHAW<small>MANAGER</small></span></a>
+    <nav aria-label="주 메뉴">
+      <a href="#dashboard" class="is-active" aria-current="location"><svg><use href="#i-grid"/></svg><span>운영실</span></a>
+      <a href="#chat"><svg><use href="#i-chat"/></svg><span>채팅</span></a>
+      <a href="#requests"><svg><use href="#i-music"/></svg><span>신청곡</span></a>
+      <a href="#connections"><svg><use href="#i-link"/></svg><span>연결 설정</span></a>
+    </nav>
+    <div class="profile"><span class="avatar">마</span><div>마차우<small>로컬 방송 도구</small></div></div>
   </aside>
   <main id="dashboard">
-    <header><div><p class="eyebrow">STREAM WORKSPACE</p><h1>대시보드</h1><p class="muted">채팅과 음악 신청을 한곳에서 관리하세요</p></div><span class="badge">● DEMO MODE</span></header>
-    <div class="notice">현재는 가상 데이터로 동작합니다. 치지직·YouTube Music에 연결하거나 음악을 실제 재생하지 않습니다.</div>
-    <section class="stats" aria-label="운영 요약">
-      <article><p>연결 상태</p><strong>오프라인 <span class="dot"></span></strong><small>외부 서비스 미연결</small></article>
-      <article><p>받은 채팅</p><strong id="chat-count">0</strong><small>이번 데모 세션</small></article>
-      <article><p>승인 대기</p><strong id="pending-count">0</strong><small>확인이 필요한 신청곡</small></article>
-      <article><p>재생 대기</p><strong id="queue-count">0</strong><small>승인된 신청곡</small></article>
-    </section>
-    <div class="grid">
-      <section class="panel" id="chat"><div class="panel-head"><h2>채팅 관리 <span class="tag">DEMO</span></h2><button id="add-chat">가상 채팅 추가</button></div><div id="chat-list" class="chat-list" aria-live="polite"></div><div class="panel-foot"><span class="muted">실제 채팅 수신 · 삭제는 미연결</span><button id="clear-chat">데모 비우기</button></div></section>
-      <section class="panel" id="music"><div class="panel-head"><h2>지금 재생 중</h2><span class="tag">시뮬레이션</span></div><div class="player"><div class="album">♫</div><h3 id="track-title"></h3><p class="muted" id="track-artist"></p><button class="primary" id="finish-track">현재 곡 종료 시뮬레이션 →</button><small>종료 시 승인된 신청곡을 순서대로 선택합니다</small></div></section>
+    <header class="topbar"><div><p class="eyebrow">MACHAW / STUDIO</p><h1>방송 운영실</h1></div><div class="topbar-right"><time id="studio-date"></time><span class="badge" id="mode-label">연결 확인 중</span></div></header>
+    <div class="overview">
+      <section class="welcome" aria-label="방송 운영 안내">
+        <div class="welcome-copy"><h2>오늘도 즐거운 방송!</h2><div class="quick-links"><a href="#requests"><svg><use href="#i-music"/></svg>신청곡 관리</a><a href="#chat"><svg><use href="#i-chat"/></svg>채팅 확인</a></div></div>
+        <svg class="mascot" viewBox="0 0 180 150" aria-hidden="true"><ellipse cx="91" cy="137" rx="57" ry="8" fill="#e4eaf6"/><g stroke="#34445c" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><circle cx="49" cy="31" r="20" fill="#fff"/><circle cx="131" cy="31" r="20" fill="#fff"/><circle cx="49" cy="31" r="11" fill="#f4c3a8" stroke="none"/><circle cx="131" cy="31" r="11" fill="#f4c3a8" stroke="none"/><path d="M62 96Q39 113 54 130Q67 141 90 130Q115 141 128 130Q140 113 118 96" fill="#fff"/><path d="M90 13Q95 5 104 9L102 17Q145 20 145 62Q145 105 90 106Q35 105 35 62Q35 23 76 17L76 10Q84 9 90 13Z" fill="#fff"/><path d="M90 16V38M75 23l4 12m26-12-4 12M39 48l13 5m-15 9 14 3m90-17-13 5m15 9-14 3" stroke="#34445c" stroke-width="5"/><path d="M61 69q7 8 14 0m30 0q7 8 14 0" fill="none"/><ellipse cx="56" cy="81" rx="8" ry="4" fill="#f1a8ac" stroke="none"/><ellipse cx="124" cy="81" rx="8" ry="4" fill="#f1a8ac" stroke="none"/><path d="M83 79q7-4 14 0l-7 7Z" fill="#34445c"/><path d="M90 86q-5 7-11 2m11-2q5 7 11 2" fill="none"/><path d="M113 110h27v17q-13 12-27 0Z" fill="#7296d2"/><path d="M140 113q17-3 12 9q-3 5-12 3" fill="none"/></g></svg>
+      </section>
+      <section class="panel connections" id="connections" data-live><div class="connection-heading"><span class="icon-box blue"><svg><use href="#i-link"/></svg></span><h2>서비스 연결</h2></div><p><strong>치지직</strong><span class="muted" id="chzzk-auth-status" role="status">인증 상태 확인 중</span><a class="badge" href="/auth/chzzk/start">치지직 로그인</a></p></section>
     </div>
-    <section class="panel requests"><div class="panel-head"><div><h2>음악 신청 목록</h2><p class="muted">승인된 곡만 다음 재생 대상으로 선택됩니다</p></div><label>보기 <select id="filter"><option value="all">전체</option><option value="pending">승인 대기</option><option value="approved">재생 대기</option><option value="played">재생 선택됨</option><option value="rejected">거절됨</option></select></label></div><div class="table-wrap"><table><thead><tr><th>신청곡</th><th>신청자</th><th>상태</th><th>관리</th></tr></thead><tbody id="request-list"></tbody></table></div><form id="request-form"><label>곡 제목<input name="title" placeholder="데모 신청곡 제목" maxlength="100" required></label><label>아티스트<input name="artist" placeholder="아티스트" maxlength="100" required></label><label>신청자<input name="requester" placeholder="닉네임" maxlength="30" required></label><button class="primary" type="submit">데모 신청 추가</button></form></section>
-    <section class="panel connections" id="connections"><h2>서비스 연결</h2><p><strong>치지직</strong><span class="muted" id="chzzk-auth-status" role="status">인증 상태 확인 중</span><a class="badge" href="/auth/chzzk/start">치지직 로그인</a></p><p><strong>YouTube Music</strong><span class="muted">미연결 · 재생 연동 방식 검토 예정</span></p></section>
-    <section class="panel connections" id="youtube-playback">
-      <h2>YouTube 플레이어</h2>
-      <form id="youtube-start">
-        <label>시작할 곡의 YouTube 링크<input name="url" type="url" placeholder="https://www.youtube.com/watch?v=…"></label>
-        <button type="submit">재생 시작</button>
-      </form>
-      <div id="youtube-player"></div>
-      <p id="youtube-status" role="status">시작 링크가 비어 있으면 첫 승인곡부터 재생합니다.</p>
+    <section class="stats" aria-label="운영 요약">
+      <article><span class="icon-box blue"><svg><use href="#i-link"/></svg></span><div><p>연결 상태</p><strong><span id="connection-summary">확인 중</span></strong><small>치지직 채팅</small></div></article>
+      <article><span class="icon-box violet"><svg><use href="#i-chat"/></svg></span><div><p>받은 채팅</p><strong id="chat-count">0</strong><small>현재 세션</small></div></article>
+      <article><span class="icon-box amber"><svg><use href="#i-clock"/></svg></span><div><p>승인 대기</p><strong id="pending-count">0</strong><small>확인이 필요한 신청곡</small></div></article>
+      <article><span class="icon-box green"><svg><use href="#i-play"/></svg></span><div><p>재생 대기</p><strong id="queue-count">0</strong><small>승인된 신청곡</small></div></article>
     </section>
-    <section class="panel connections">
-      <h2>채팅 명령 테스트</h2>
-      <form id="chat-command-form">
-        <label>닉네임<input name="user" value="데모 시청자" maxlength="30" required></label>
-        <label>채팅 메시지<input name="text" placeholder="!신청곡 곡 제목 아티스트" maxlength="500" required></label>
-        <button type="submit">가상 채팅 전송</button>
-      </form>
-    </section>
-    <p id="feedback" role="status" aria-live="polite"></p><footer>MACHAW Manager <span>v0.1.0 · 데이터는 서버 재시작 시 초기화됩니다</span></footer>
+    <div class="studio-main">
+      <section class="panel requests" id="requests"><div class="panel-head"><h2>음악 신청 목록</h2><label>보기 <select id="filter"><option value="all">전체</option><option value="pending">승인 대기</option><option value="approved">재생 대기</option><option value="played">재생 선택됨</option><option value="rejected">거절됨</option></select></label></div><div class="table-wrap"><table><thead><tr><th>신청곡</th><th>신청자</th><th>상태</th><th>관리</th></tr></thead><tbody id="request-list"></tbody></table></div><form id="request-form"><label>곡 제목<input name="title" placeholder="신청곡 제목" maxlength="100" required></label><label>아티스트<input name="artist" placeholder="아티스트" maxlength="100" required></label><label>신청자<input name="requester" placeholder="닉네임" maxlength="30" required></label><button class="primary" type="submit">직접 신청 추가</button></form></section>
+      <section class="panel connections" id="youtube-playback" data-live><h2>YouTube 플레이어</h2><form id="youtube-start"><label>시작할 곡의 YouTube 링크<input name="url" type="url" placeholder="https://www.youtube.com/watch?v=…"></label><button type="submit">재생 시작</button></form><div id="youtube-player"></div><p id="youtube-status" role="status">시작 링크가 비어 있으면 첫 승인곡부터 재생합니다.</p></section>
+    </div>
+    <aside class="studio-side" aria-label="재생과 채팅">
+      <section class="panel" id="music"><div class="panel-head"><h2>지금 재생 중</h2></div><div class="player"><span class="album-icon"><svg><use href="#i-music"/></svg></span><div class="track-info"><h3 id="track-title"></h3><p class="muted" id="track-artist"></p></div><button class="primary" id="finish-track">다음 승인곡</button></div></section>
+      <section class="panel" id="chat"><div class="panel-head"><h2>채팅 관리 <span class="tag">수신 대기</span></h2><button id="add-chat" data-demo>가상 채팅 추가</button></div><div id="chat-list" class="chat-list" aria-live="polite"></div><div class="panel-foot"><span class="muted">연결 상태 확인 중</span><button id="clear-chat" data-demo>데모 비우기</button></div></section>
+    </aside>
+    <section class="panel connections" data-demo><h2>채팅 명령 테스트</h2><form id="chat-command-form"><label>닉네임<input name="user" value="데모 시청자" maxlength="30" required></label><label>채팅 메시지<input name="text" placeholder="!신청곡 곡 제목 아티스트" maxlength="500" required></label><button type="submit">가상 채팅 전송</button></form></section>
+    <p id="feedback" role="status" aria-live="polite"></p><footer>MACHAW Manager <span>로컬 방송 운영</span></footer>
   </main>
 </body>
 </html>
