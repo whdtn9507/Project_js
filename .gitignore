@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+logs/
+data/
+secrets/
+cookies/
+tokens/
+*.pem
+*.key
+coverage/
+.DS_Store
+Thumbs.db
+.vscode/

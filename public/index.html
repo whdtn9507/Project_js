@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MACHAW Manager</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#dashboard"><span class="mark">M</span><span>MACHAW<small>MANAGER</small></span></a>
+    <p class="nav-label">WORKSPACE</p>
+    <nav aria-label="주 메뉴"><a href="#dashboard">▦ 대시보드</a><a href="#chat">◌ 채팅 관리</a><a href="#music">♫ 음악 신청</a><a href="#connections">⚙ 연결 상태</a></nav>
+    <div class="profile"><span class="avatar">마</span><div>마차우<small>로컬 관리자 · 데모</small></div></div>
+  </aside>
+  <main id="dashboard">
+    <header><div><p class="eyebrow">STREAM WORKSPACE</p><h1>대시보드</h1><p class="muted">채팅과 음악 신청을 한곳에서 관리하세요</p></div><span class="badge">● DEMO MODE</span></header>
+    <div class="notice">현재는 가상 데이터로 동작합니다. 치지직·YouTube Music에 연결하거나 음악을 실제 재생하지 않습니다.</div>
+    <section class="stats" aria-label="운영 요약">
+      <article><p>연결 상태</p><strong>오프라인 <span class="dot"></span></strong><small>외부 서비스 미연결</small></article>
+      <article><p>받은 채팅</p><strong id="chat-count">0</strong><small>이번 데모 세션</small></article>
+      <article><p>승인 대기</p><strong id="pending-count">0</strong><small>확인이 필요한 신청곡</small></article>
+      <article><p>재생 대기</p><strong id="queue-count">0</strong><small>승인된 신청곡</small></article>
+    </section>
+    <div class="grid">
+      <section class="panel" id="chat"><div class="panel-head"><h2>채팅 관리 <span class="tag">DEMO</span></h2><button id="add-chat">가상 채팅 추가</button></div><div id="chat-list" class="chat-list" aria-live="polite"></div><div class="panel-foot"><span class="muted">실제 채팅 수신 · 삭제는 미연결</span><button id="clear-chat">데모 비우기</button></div></section>
+      <section class="panel" id="music"><div class="panel-head"><h2>지금 재생 중</h2><span class="tag">시뮬레이션</span></div><div class="player"><div class="album">♫</div><h3 id="track-title"></h3><p class="muted" id="track-artist"></p><button class="primary" id="finish-track">현재 곡 종료 시뮬레이션 →</button><small>종료 시 승인된 신청곡을 순서대로 선택합니다</small></div></section>
+    </div>
+    <section class="panel requests"><div class="panel-head"><div><h2>음악 신청 목록</h2><p class="muted">승인된 곡만 다음 재생 대상으로 선택됩니다</p></div><label>보기 <select id="filter"><option value="all">전체</option><option value="pending">승인 대기</option><option value="approved">재생 대기</option><option value="played">재생 선택됨</option><option value="rejected">거절됨</option></select></label></div><div class="table-wrap"><table><thead><tr><th>신청곡</th><th>신청자</th><th>상태</th><th>관리</th></tr></thead><tbody id="request-list"></tbody></table></div><form id="request-form"><label>곡 제목<input name="title" placeholder="데모 신청곡 제목" maxlength="100" required></label><label>아티스트<input name="artist" placeholder="아티스트" maxlength="100" required></label><label>신청자<input name="requester" placeholder="닉네임" maxlength="30" required></label><button class="primary" type="submit">데모 신청 추가</button></form></section>
+    <section class="panel connections" id="connections"><h2>서비스 연결</h2><p><strong>치지직</strong><span class="muted">미연결 · OAuth 연동 예정</span></p><p><strong>YouTube Music</strong><span class="muted">미연결 · 재생 연동 방식 검토 예정</span></p></section>
+    <p id="feedback" role="status" aria-live="polite"></p><footer>MACHAW Manager <span>v0.1.0 · 데이터는 서버 재시작 시 초기화됩니다</span></footer>
+  </main>
+</body>
+</html>
