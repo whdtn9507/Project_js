@@ -22,12 +22,24 @@ export function createManager() {
       if (state.requests.length >= 100) throw new Error('신청 목록이 가득 찼습니다.');
       state.requests.push({ id: randomUUID(), title: clean('title', 100), artist: clean('artist', 100), requester: clean('requester', 30), status: 'pending' });
     },
-    moderate(id, action) {
+    moderate(id, action, videoId) {
       const item = state.requests.find(row => row.id === id);
       if (!item) throw new Error('신청곡을 찾을 수 없습니다.');
       if (item.status !== 'pending') throw new Error('이미 처리한 신청곡입니다.');
       if (!['approve', 'reject'].includes(action)) throw new Error('잘못된 처리입니다.');
+      if (videoId !== undefined) {
+        if (action !== 'approve' || typeof videoId !== 'string' || !/^[\w-]{11}$/.test(videoId)) {
+          throw new Error('올바른 YouTube 영상 링크를 입력해 주세요.');
+        }
+        item.videoId = videoId;
+      }
       item.status = action === 'approve' ? 'approved' : 'rejected';
+    },
+    confirmPlayback(id) {
+      const next = state.requests.find(row => row.status === 'approved' && row.videoId);
+      if (!next || next.id !== id) throw new Error('재생 대기 목록이 바뀌었습니다.');
+      next.status = 'played';
+      state.current = { title: next.title, artist: next.artist };
     },
     finish() {
       const next = state.requests.find(row => row.status === 'approved');
