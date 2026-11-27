@@ -1,0 +1,16 @@
+{
+  "name": "machaw-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MACHAW Manager local demo dashboard",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js && node --check src/state.js && node --check public/app.js"
+  },
+  "dependencies": { "express": "^5.1.0", "socket.io": "^4.8.1" },
+  "devDependencies": { "socket.io-client": "^4.8.1" }
+}
