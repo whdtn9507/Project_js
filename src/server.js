@@ -16,7 +16,7 @@ export function createApp() {
     const origin = req.headers.origin;
     if (origin && origin !== `http://${req.headers.host}`) return res.status(403).json({ error: '허용되지 않은 출처입니다.' });
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' ws:; object-src 'none'; frame-ancestors 'none'");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' https://www.youtube.com; frame-src https://www.youtube.com; style-src 'self'; connect-src 'self' ws:; object-src 'none'; frame-ancestors 'none'");
     next();
   });
   app.use(express.json({ limit: '16kb' }));
@@ -42,7 +42,8 @@ export function createApp() {
     } catch (error) { res.status(400).json({ error: error.message }); }
   };
   app.post('/api/requests', mutate(req => manager.request(req.body)));
-  app.post('/api/requests/:id/:action', mutate(req => manager.moderate(req.params.id, req.params.action)));
+  app.post('/api/requests/:id/:action', mutate(req => manager.moderate(req.params.id, req.params.action, req.body?.videoId)));
+  app.post('/api/playback/:id/started', mutate(req => manager.confirmPlayback(req.params.id)));
   app.post('/api/demo/track-ended', mutate(() => manager.finish()));
   app.post('/api/demo/chat', mutate(req => manager.chat(req.body?.user, req.body?.text)));
   app.delete('/api/demo/chat', mutate(() => manager.clearChat()));

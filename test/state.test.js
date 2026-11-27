@@ -2,6 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createManager } from '../src/state.js';
 
+test('YouTube playback consumes only the next linked approved request', () => {
+  const manager = createManager();
+  assert.throws(() => manager.moderate('demo-1', 'approve', 'invalid'));
+  manager.moderate('demo-1', 'approve', 'abcdefghijk');
+  assert.throws(() => manager.confirmPlayback('demo-2'));
+  manager.confirmPlayback('demo-1');
+  assert.equal(manager.snapshot().current.title, '밤 산책');
+  assert.equal(manager.snapshot().requests[0].status, 'played');
+  assert.equal(manager.snapshot().requests[1].status, 'approved');
+  assert.throws(() => manager.confirmPlayback('demo-1'));
+});
+
 test('chat song commands create pending requests and preserve the playing track', () => {
   const manager = createManager();
   const before = manager.snapshot();

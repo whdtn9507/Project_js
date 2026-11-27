@@ -31,7 +31,19 @@ function render(next) {
     if (request.status === 'pending') {
       for (const [action, label] of [['approve', '승인'], ['reject', '거절']]) {
         const button = node('button', label, action === 'approve' ? 'approve' : '');
-        button.addEventListener('click', () => command(`/api/requests/${encodeURIComponent(request.id)}/${action}`));
+        button.addEventListener('click', () => {
+          let body;
+          if (action === 'approve') {
+            const link = window.prompt('YouTube 영상 링크를 입력하세요. 링크 없이 승인하면 시뮬레이션에서만 사용할 수 있습니다.');
+            if (link === null) return;
+            if (link.trim()) {
+              const videoId = youtubeVideoId(link);
+              if (!videoId) { $('#feedback').textContent = '올바른 YouTube 영상 링크를 입력해 주세요.'; return; }
+              body = { videoId };
+            }
+          }
+          command(`/api/requests/${encodeURIComponent(request.id)}/${action}`, body);
+        });
         actions.append(button);
       }
     } else actions.textContent = '—';
