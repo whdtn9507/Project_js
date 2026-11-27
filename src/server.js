@@ -3,14 +3,15 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import { createManager } from './state.js';
+import { createRequestStore } from './request-store.js';
 import { installChzzkAuth } from './chzzk-auth.js';
 import { createChzzkChat } from './chzzk-chat.js';
 
-export function createApp() {
+export function createApp(requestStore) {
   const app = express();
   const server = createServer(app);
   const io = new Server(server, { maxHttpBufferSize: 16384 });
-  const manager = createManager();
+  const manager = createManager(requestStore);
   // Local development only. Reject browser requests from other origins.
   app.use((req, res, next) => {
     const origin = req.headers.origin;
@@ -55,7 +56,7 @@ export function createApp() {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const port = Number(process.env.PORT || 3000);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT는 1~65535의 정수여야 합니다.');
-  const { server } = createApp();
+  const { server } = createApp(createRequestStore());
   server.on('error', error => { console.error(`서버 시작 실패: ${error.message}`); process.exitCode = 1; });
   server.listen(port, '127.0.0.1', () => console.log(`MACHAW Manager · http://127.0.0.1:${port} · DEMO`));
 }
