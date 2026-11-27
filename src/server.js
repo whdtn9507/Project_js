@@ -7,11 +7,11 @@ import { createRequestStore } from './request-store.js';
 import { installChzzkAuth } from './chzzk-auth.js';
 import { createChzzkChat } from './chzzk-chat.js';
 
-export function createApp(requestStore) {
+export function createApp(requestStore, mode = 'demo') {
   const app = express();
   const server = createServer(app);
   const io = new Server(server, { maxHttpBufferSize: 16384 });
-  const manager = createManager(requestStore);
+  const manager = createManager(requestStore, mode);
   // Local development only. Reject browser requests from other origins.
   app.use((req, res, next) => {
     const origin = req.headers.origin;
@@ -29,10 +29,10 @@ export function createApp(requestStore) {
       // Invalid song commands must not interrupt later chat events.
     }
   });
-  installChzzkAuth(app, chzzkChat);
+  if (mode === 'live') installChzzkAuth(app, chzzkChat);
   server.on('close', () => chzzkChat.stop());
   app.use(express.static(fileURLToPath(new URL('../public', import.meta.url))));
-  app.get('/api/health', (req, res) => res.json({ ok: true, mode: 'demo' }));
+  app.get('/api/health', (req, res) => res.json({ ok: true, mode }));
   app.get('/api/state', (req, res) => res.json(manager.snapshot()));
   const mutate = handler => (req, res) => {
     try {
@@ -45,9 +45,11 @@ export function createApp(requestStore) {
   app.post('/api/requests', mutate(req => manager.request(req.body)));
   app.post('/api/requests/:id/:action', mutate(req => manager.moderate(req.params.id, req.params.action, req.body?.videoId)));
   app.post('/api/playback/:id/started', mutate(req => manager.confirmPlayback(req.params.id)));
-  app.post('/api/demo/track-ended', mutate(() => manager.finish()));
-  app.post('/api/demo/chat', mutate(req => manager.chat(req.body?.user, req.body?.text)));
-  app.delete('/api/demo/chat', mutate(() => manager.clearChat()));
+  if (mode === 'demo') {
+    app.post('/api/demo/track-ended', mutate(() => manager.finish()));
+    app.post('/api/demo/chat', mutate(req => manager.chat(req.body?.user, req.body?.text)));
+    app.delete('/api/demo/chat', mutate(() => manager.clearChat()));
+  }
   io.on('connection', socket => socket.emit('state', manager.snapshot()));
   app.use((err, req, res, next) => res.status(err.status || 500).json({ error: '요청을 처리할 수 없습니다.' }));
   return { app, server, io };
@@ -56,7 +58,8 @@ export function createApp(requestStore) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const port = Number(process.env.PORT || 3000);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT는 1~65535의 정수여야 합니다.');
-  const { server } = createApp(createRequestStore());
+  const mode = process.env.MACHAW_MODE === 'demo' ? 'demo' : 'live';
+  const { server } = createApp(mode === 'live' ? createRequestStore() : undefined, mode);
   server.on('error', error => { console.error(`서버 시작 실패: ${error.message}`); process.exitCode = 1; });
-  server.listen(port, '127.0.0.1', () => console.log(`MACHAW Manager · http://127.0.0.1:${port} · DEMO`));
+  server.listen(port, '127.0.0.1', () => console.log(`MACHAW Manager · http://127.0.0.1:${port} · ${mode}`));
 }

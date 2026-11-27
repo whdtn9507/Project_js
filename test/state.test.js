@@ -2,6 +2,39 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createManager } from '../src/state.js';
 
+test('live mode starts with no sample songs, chat, or playing track', () => {
+  const snapshot = createManager(undefined, 'live').snapshot();
+  assert.equal(snapshot.mode, 'live');
+  assert.deepEqual(snapshot.requests, []);
+  assert.deepEqual(snapshot.chats, []);
+  assert.equal(snapshot.current, null);
+});
+
+test('finishing or rejecting a request frees capacity in a full queue', () => {
+  const manager = createManager();
+  const song = { title: 'Song', artist: 'Artist', requester: 'viewer' };
+  for (let index = 0; index < 98; index++) manager.request(song);
+  assert.throws(() => manager.request(song), /가득/);
+  manager.finish();
+  manager.request(song);
+  manager.moderate('demo-1', 'reject');
+  manager.request(song);
+  assert.throws(() => manager.request(song), /가득/);
+});
+
+test('canceling approval returns a song to review and removes its playback link', () => {
+  const manager = createManager();
+  const current = manager.snapshot().current;
+  manager.moderate('demo-1', 'approve', 'abcdefghijk');
+  manager.moderate('demo-1', 'cancel');
+  const request = manager.snapshot().requests[0];
+  assert.equal(request.status, 'pending');
+  assert.equal(request.videoId, undefined);
+  assert.deepEqual(manager.snapshot().current, current);
+  assert.throws(() => manager.confirmPlayback('demo-1'));
+  assert.throws(() => manager.moderate('demo-1', 'cancel'));
+});
+
 test('YouTube playback consumes only the next linked approved request', () => {
   const manager = createManager();
   assert.throws(() => manager.moderate('demo-1', 'approve', 'invalid'));
