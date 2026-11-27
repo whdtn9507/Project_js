@@ -19,7 +19,7 @@ test('chat song commands create pending requests and preserve the playing track'
   const before = manager.snapshot();
   manager.chat('마차우', '오늘도 안녕하세요');
   assert.equal(manager.snapshot().requests.length, before.requests.length);
-  assert.throws(() => manager.chat('마차우', '!신청곡 곡 제목'), /사용법/);
+  assert.throws(() => manager.chat('마차우', '!신청곡 제목'), /사용법/);
   manager.chat('마차우', '!신청곡 그럼에도 우리의 이름은 | 달담');
   const after = manager.snapshot();
   assert.equal(after.requests.length, before.requests.length + 1);
@@ -28,6 +28,17 @@ test('chat song commands create pending requests and preserve the playing track'
     title: '그럼에도 우리의 이름은', artist: '달담', requester: '마차우', status: 'pending'
   });
   assert.deepEqual(after.current, before.current);
+});
+
+test('chat accepts a final artist word or a quoted artist name', () => {
+  const manager = createManager();
+  manager.chat('마차우', '!신청곡 그럼에도 우리의 이름은 달담');
+  manager.chat('마차우', '!신청곡 Viva La Vida "Coldplay Live"');
+  const requests = manager.snapshot().requests.slice(-2);
+  assert.deepEqual(requests.map(({ title, artist }) => [title, artist]), [
+    ['그럼에도 우리의 이름은', '달담'],
+    ['Viva La Vida', 'Coldplay Live']
+  ]);
 });
 
 test('approval leaves current track unchanged; track end selects approved requests FIFO', () => {

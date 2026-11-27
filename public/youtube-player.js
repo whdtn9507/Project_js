@@ -27,6 +27,26 @@ function nextYoutubeTrack() {
   loadYoutubeTrack(next);
 }
 
+const nextTrackButton = $('#finish-track');
+nextTrackButton.addEventListener('click', async () => {
+  if (!youtubePlayer) {
+    await command('/api/demo/track-ended');
+    return;
+  }
+  if (!state?.requests.some(row => row.status === 'approved' && row.videoId)) {
+    $('#feedback').textContent = 'YouTube 링크가 지정된 재생 대기곡이 없습니다.';
+    return;
+  }
+  const previous = selected;
+  nextTrackButton.disabled = true;
+  try {
+    await started;
+    if (selected === previous) nextYoutubeTrack();
+  } finally {
+    nextTrackButton.disabled = false;
+  }
+});
+
 function loadYoutubeTrack(track) {
   selected = track;
   playing = false;
@@ -47,6 +67,7 @@ function initializeYoutubePlayer() {
           onReady(event) {
             clearTimeout(timeout);
             youtubePlayer = event.target;
+            nextTrackButton.textContent = '다음 YouTube 신청곡 →';
             youtubePlayer.getIframe().setAttribute('allow', 'autoplay; encrypted-media; fullscreen');
             resolve();
           },
