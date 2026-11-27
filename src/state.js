@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 
 const isQueued = row => row.status === 'pending' || row.status === 'approved';
 
-export function createManager(requestStore) {
+export function createManager(requestStore, mode = 'demo') {
   const state = {
-    mode: 'demo',
+    mode,
     connections: { chzzk: false, youtubeMusic: false },
     current: { title: '방송 시작 전 플레이리스트', artist: '데모 음악 · 실제 재생 없음' },
     requests: requestStore?.load() ?? [
@@ -13,6 +13,11 @@ export function createManager(requestStore) {
     ],
     chats: [{ id: 'chat-1', user: '시스템', text: '데모 채팅입니다. 실제 치지직 연결은 꺼져 있습니다.' }]
   };
+  if (mode === 'live') {
+    state.current = null;
+    state.chats = [];
+    if (!requestStore) state.requests = [];
+  }
   function updateRequests(change) {
     const requests = structuredClone(state.requests);
     const result = change(requests);

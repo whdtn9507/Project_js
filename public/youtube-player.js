@@ -29,7 +29,7 @@ function nextYoutubeTrack() {
 
 const nextTrackButton = $('#finish-track');
 nextTrackButton.addEventListener('click', async () => {
-  if (!youtubePlayer) {
+  if (state?.mode === 'demo') {
     await command('/api/demo/track-ended');
     return;
   }
@@ -40,8 +40,11 @@ nextTrackButton.addEventListener('click', async () => {
   const previous = selected;
   nextTrackButton.disabled = true;
   try {
+    await initializeYoutubePlayer();
     await started;
     if (selected === previous) nextYoutubeTrack();
+  } catch (error) {
+    $('#feedback').textContent = error.message;
   } finally {
     nextTrackButton.disabled = false;
   }
@@ -67,7 +70,6 @@ function initializeYoutubePlayer() {
           onReady(event) {
             clearTimeout(timeout);
             youtubePlayer = event.target;
-            nextTrackButton.textContent = '다음 YouTube 신청곡 →';
             youtubePlayer.getIframe().setAttribute('allow', 'autoplay; encrypted-media; fullscreen');
             resolve();
           },

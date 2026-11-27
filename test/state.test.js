@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createManager } from '../src/state.js';
 
+test('live mode starts with no sample songs, chat, or playing track', () => {
+  const snapshot = createManager(undefined, 'live').snapshot();
+  assert.equal(snapshot.mode, 'live');
+  assert.deepEqual(snapshot.requests, []);
+  assert.deepEqual(snapshot.chats, []);
+  assert.equal(snapshot.current, null);
+});
+
 test('finishing or rejecting a request frees capacity in a full queue', () => {
   const manager = createManager();
   const song = { title: 'Song', artist: 'Artist', requester: 'viewer' };
