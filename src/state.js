@@ -11,7 +11,7 @@ export function createManager() {
     ],
     chats: [{ id: 'chat-1', user: '시스템', text: '데모 채팅입니다. 실제 치지직 연결은 꺼져 있습니다.' }]
   };
-  return {
+  const manager = {
     snapshot: () => structuredClone(state),
     request(input) {
       const clean = (key, max) => {
@@ -35,10 +35,23 @@ export function createManager() {
       next.status = 'played';
       state.current = { title: next.title, artist: next.artist };
     },
-    chat() {
-      state.chats.push({ id: randomUUID(), user: '데모 시청자', text: '안녕하세요! 오늘 방송도 함께할게요.' });
+    chat(user = '데모 시청자', text = '안녕하세요! 오늘 방송도 함께할게요.') {
+      if (typeof user !== 'string' || !user.trim() || user.trim().length > 30 ||
+          typeof text !== 'string' || !text.trim() || text.length > 500) {
+        throw new Error('닉네임은 1~30자, 채팅은 1~500자로 입력해 주세요.');
+      }
+      const message = text.trim();
+      if (/^!신청곡(?:\s|$)/u.test(message)) {
+        const fields = message.slice('!신청곡'.length).split('|');
+        if (fields.length !== 2 || fields.some(field => !field.trim())) {
+          throw new Error('사용법: !신청곡 곡 제목 | 아티스트');
+        }
+        manager.request({ title: fields[0], artist: fields[1], requester: user });
+      }
+      state.chats.push({ id: randomUUID(), user: user.trim(), text: message });
       state.chats = state.chats.slice(-50);
     },
     clearChat() { state.chats = []; }
   };
+  return manager;
 }

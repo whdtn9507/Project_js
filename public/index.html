@@ -29,7 +29,15 @@
       <section class="panel" id="music"><div class="panel-head"><h2>지금 재생 중</h2><span class="tag">시뮬레이션</span></div><div class="player"><div class="album">♫</div><h3 id="track-title"></h3><p class="muted" id="track-artist"></p><button class="primary" id="finish-track">현재 곡 종료 시뮬레이션 →</button><small>종료 시 승인된 신청곡을 순서대로 선택합니다</small></div></section>
     </div>
     <section class="panel requests"><div class="panel-head"><div><h2>음악 신청 목록</h2><p class="muted">승인된 곡만 다음 재생 대상으로 선택됩니다</p></div><label>보기 <select id="filter"><option value="all">전체</option><option value="pending">승인 대기</option><option value="approved">재생 대기</option><option value="played">재생 선택됨</option><option value="rejected">거절됨</option></select></label></div><div class="table-wrap"><table><thead><tr><th>신청곡</th><th>신청자</th><th>상태</th><th>관리</th></tr></thead><tbody id="request-list"></tbody></table></div><form id="request-form"><label>곡 제목<input name="title" placeholder="데모 신청곡 제목" maxlength="100" required></label><label>아티스트<input name="artist" placeholder="아티스트" maxlength="100" required></label><label>신청자<input name="requester" placeholder="닉네임" maxlength="30" required></label><button class="primary" type="submit">데모 신청 추가</button></form></section>
-    <section class="panel connections" id="connections"><h2>서비스 연결</h2><p><strong>치지직</strong><span class="muted">미연결 · OAuth 연동 예정</span></p><p><strong>YouTube Music</strong><span class="muted">미연결 · 재생 연동 방식 검토 예정</span></p></section>
+    <section class="panel connections" id="connections"><h2>서비스 연결</h2><p><strong>치지직</strong><span class="muted" id="chzzk-auth-status" role="status">인증 상태 확인 중</span><a class="badge" href="/auth/chzzk/start">치지직 로그인</a></p><p><strong>YouTube Music</strong><span class="muted">미연결 · 재생 연동 방식 검토 예정</span></p></section>
+    <section class="panel connections">
+      <h2>채팅 명령 테스트</h2>
+      <form id="chat-command-form">
+        <label>닉네임<input name="user" value="데모 시청자" maxlength="30" required></label>
+        <label>채팅 메시지<input name="text" placeholder="!신청곡 곡 제목 | 아티스트" maxlength="500" required></label>
+        <button type="submit">가상 채팅 전송</button>
+      </form>
+    </section>
     <p id="feedback" role="status" aria-live="polite"></p><footer>MACHAW Manager <span>v0.1.0 · 데이터는 서버 재시작 시 초기화됩니다</span></footer>
   </main>
 </body>

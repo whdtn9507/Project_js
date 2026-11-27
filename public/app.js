@@ -66,6 +66,27 @@ $('#request-form').addEventListener('submit', async event => {
   if (await command('/api/requests', Object.fromEntries(new FormData(form)))) form.reset();
 });
 const socket = io();
+const refreshChzzkStatus = () => fetch('/api/chzzk/auth-status').then(response => {
+  if (!response.ok) throw new Error('인증 상태 조회 실패');
+  return response.json();
+}).then(({ authenticated, chatStatus }) => {
+  const labels = {
+    connecting: '채팅 연결 중', subscribed: '채팅 수신 중',
+    error: '채팅 연결 실패 · 다시 로그인', disconnected: '채팅 연결 끊김 · 다시 로그인'
+  };
+  $('#chzzk-auth-status').textContent = labels[chatStatus] ?? (authenticated ? '인증 완료' : '인증 필요');
+}).catch(() => {
+  $('#chzzk-auth-status').textContent = '인증 상태 조회 실패';
+});
+refreshChzzkStatus();
+setInterval(refreshChzzkStatus, 3000);
+$('#chat-command-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (await command('/api/demo/chat', Object.fromEntries(new FormData(form)))) {
+    form.elements.text.value = '';
+  }
+});
 socket.on('state', render);
 socket.on('connect', () => { $('#feedback').textContent = '로컬 서버에 연결되었습니다'; });
 socket.on('disconnect', () => { $('#feedback').textContent = '로컬 서버 연결이 끊겼습니다. 다시 연결하는 중입니다.'; });
