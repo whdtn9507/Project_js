@@ -2,6 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createManager } from '../src/state.js';
 
+test('finishing or rejecting a request frees capacity in a full queue', () => {
+  const manager = createManager();
+  const song = { title: 'Song', artist: 'Artist', requester: 'viewer' };
+  for (let index = 0; index < 98; index++) manager.request(song);
+  assert.throws(() => manager.request(song), /가득/);
+  manager.finish();
+  manager.request(song);
+  manager.moderate('demo-1', 'reject');
+  manager.request(song);
+  assert.throws(() => manager.request(song), /가득/);
+});
+
 test('canceling approval returns a song to review and removes its playback link', () => {
   const manager = createManager();
   const current = manager.snapshot().current;

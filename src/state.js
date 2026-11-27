@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+const isQueued = row => row.status === 'pending' || row.status === 'approved';
+
 export function createManager(requestStore) {
   const state = {
     mode: 'demo',
@@ -14,7 +16,7 @@ export function createManager(requestStore) {
   function updateRequests(change) {
     const requests = structuredClone(state.requests);
     const result = change(requests);
-    requestStore?.save(requests.filter(row => row.status === 'pending' || row.status === 'approved'));
+    requestStore?.save(requests.filter(isQueued));
     state.requests = requests;
     return result;
   }
@@ -26,7 +28,7 @@ export function createManager(requestStore) {
         if (!value || value.length > max) throw new Error(`${key}: 1~${max}자로 입력해 주세요.`);
         return value;
       };
-      if (state.requests.length >= 100) throw new Error('신청 목록이 가득 찼습니다.');
+      if (state.requests.filter(isQueued).length >= 100) throw new Error('신청 목록이 가득 찼습니다.');
       updateRequests(requests => requests.push({ id: randomUUID(), title: clean('title', 100), artist: clean('artist', 100), requester: clean('requester', 30), status: 'pending' }));
     },
     moderate(id, action, videoId) {
