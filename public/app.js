@@ -52,6 +52,10 @@ function render(next) {
         });
         actions.append(button);
       }
+    } else if (request.status === 'approved') {
+      const cancel = node('button', '승인 취소');
+      cancel.addEventListener('click', () => command(`/api/requests/${encodeURIComponent(request.id)}/cancel`));
+      actions.append(cancel);
     } else actions.textContent = '—';
     row.append(title, node('td', request.requester), status, actions);
     return row;

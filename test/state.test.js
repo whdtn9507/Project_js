@@ -2,6 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createManager } from '../src/state.js';
 
+test('canceling approval returns a song to review and removes its playback link', () => {
+  const manager = createManager();
+  const current = manager.snapshot().current;
+  manager.moderate('demo-1', 'approve', 'abcdefghijk');
+  manager.moderate('demo-1', 'cancel');
+  const request = manager.snapshot().requests[0];
+  assert.equal(request.status, 'pending');
+  assert.equal(request.videoId, undefined);
+  assert.deepEqual(manager.snapshot().current, current);
+  assert.throws(() => manager.confirmPlayback('demo-1'));
+  assert.throws(() => manager.moderate('demo-1', 'cancel'));
+});
+
 test('YouTube playback consumes only the next linked approved request', () => {
   const manager = createManager();
   assert.throws(() => manager.moderate('demo-1', 'approve', 'invalid'));
